@@ -1,0 +1,122 @@
+-- О документе
+-- -----------
+-- Источник: seeds measurements + items.
+-- Цель: выбросы недельного IQR; группы — линия × площадка, как в исходной outliers-функции.
+-- Результат: отбраковка скрипта 2.
+-- Точечно: алиасы подзапросов FROM (иначе PostgreSQL не выполняет SELECT).
+
+{{ config(materialized='view') }}
+
+with
+outliers_detection as (
+	select
+		ages,
+		factory_id,
+		product_line,
+		case when lower_value between avg_lower_value / {{ var('left_coef') }} and avg_lower_value * {{ var('left_coef') }} then lower_value else avg_lower_value / {{ var('left_coef') }} end as lower_value,
+		case when upper_value between avg_upper_value / {{ var('right_coef') }} and avg_upper_value * {{ var('right_coef') }} then upper_value else avg_upper_value * {{ var('right_coef') }} end as upper_value
+	from
+		(select
+			ages,
+			factory_id,
+			product_line,
+			lower_value,
+			upper_value,
+			avg(lower_value) over(partition by ages) as avg_lower_value,
+			avg(upper_value) over(partition by ages) as avg_upper_value,
+			count
+		from
+			(select
+				ages,
+				product_line,
+				factory_id,
+				q1 - ((q3 - q1) * ({{ var('iqr_min') }} + ((({{ var('iqr_max') }} - {{ var('iqr_min') }}) / maxtime) * ages))) as lower_value,
+				q3 + ((q3 - q1) * ({{ var('iqr_min') }} + ((({{ var('iqr_max') }} - {{ var('iqr_min') }}) / maxtime) * ages))) as upper_value,
+				count
+			from
+				(select
+					ages,
+					product_line,
+					factory_id,
+					percentile_cont({{ var('q_1_max') }} - ((({{ var('q_1_max') }} - {{ var('q_1_min') }}) / maxtime) * ages)) within group (ORDER BY mass) AS q1,
+					percentile_cont({{ var('q_3_min') }} + ((({{ var('q_3_max') }} - {{ var('q_3_min') }}) / maxtime) * ages)) within group (ORDER BY mass) AS q3,
+					maxtime,
+					count(*) as count
+				from
+					(select
+						ages,
+						product_line,
+						factory_id,
+						mass,
+						max(ages) over() as maxtime
+					from
+						(select
+							round(cast(est.age_days / 7 as numeric), 0) as ages,
+							pas.product_line,
+							est.factory_id,
+							est.mass,
+							case when age_days != lag(age_days) over(partition by est.item_id order by event_date asc)
+								then (est.mass - lag(est.mass) over(partition by est.item_id order by event_date asc)) / (age_days - lag(age_days) over(partition by est.item_id order by event_date asc))
+							 	when age_days = lag(age_days) over(partition by est.item_id order by event_date asc) then 999 end as growth
+						from
+							{{ ref('measurements') }} as est
+						left join
+							{{ ref('items') }} as pas on est.item_id = pas.item_id
+						where
+							age_days >= 0 and
+							mass > 0 and
+							event_type != 'transfer'
+						order by
+							mass asc) as subquery_0
+					where
+						growth between -3 and 3 or growth is null
+					group by
+						ages,
+						product_line,
+						factory_id,
+						mass
+						) as subquery_1
+				group by
+					ages,
+					product_line,
+					factory_id,
+					maxtime) as subquery_2
+			order by
+				ages) as subquery_3
+		) as subquery_4
+)
+select
+	item_id,
+	event_date,
+	event_type,
+	mass,
+	age_days,
+	document_id,
+	ds.factory_id
+from
+	(select
+		est.item_id,
+		event_date,
+		event_type,
+		mass,
+		age_days,
+		document_id,
+		est.factory_id,
+		pas.product_line,
+		round(cast(est.age_days / 7 as numeric), 0) as ages,
+		case when age_days != lag(age_days) over(partition by est.item_id order by event_date asc)
+			then (est.mass - lag(est.mass) over(partition by est.item_id order by event_date asc)) / (age_days - lag(age_days) over(partition by est.item_id order by event_date asc))
+		 	when age_days = lag(age_days) over(partition by est.item_id order by event_date asc) then 999 end as growth
+	from
+		{{ ref('measurements') }} as est
+	left join
+		{{ ref('items') }} as pas on est.item_id = pas.item_id
+	where
+		age_days >= 0 and
+		mass > 0) as ds
+left join
+	outliers_detection as od on ds.ages = od.ages and ds.product_line = od.product_line and ds.factory_id = od.factory_id
+where
+	(ds.mass not between lower_value and upper_value) or (growth not between -3 and 3 and growth is not null)
+order by
+	ds.item_id asc

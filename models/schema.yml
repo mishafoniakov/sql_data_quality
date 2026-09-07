@@ -1,0 +1,50 @@
+version: 2
+
+seeds:
+  - name: items
+    description: Паспорт изделия — линия, тип, дата запуска, площадка.
+    columns:
+      - name: item_id
+        tests: [not_null, unique]
+      - name: start_date
+        tests: [not_null]
+  - name: measurements
+    description: Измерения массы по возрасту процесса.
+    columns:
+      - name: item_id
+        tests: [not_null]
+      - name: event_date
+        tests: [not_null]
+      - name: mass
+        tests: [not_null]
+    config:
+      column_types:
+        event_date: date
+        mass: float8
+        age_days: integer
+
+models:
+  - name: 01_qc_kept
+    description: Измерения внутри возрастного IQR (скрипт 1, возраст = дата события − дата запуска).
+    columns:
+      - name: item_id
+        tests: [not_null]
+      - name: mass
+        tests: [not_null]
+  - name: 01_qc_outliers
+    description: Отбраковка скрипта 1 — вне IQR или прирост вне [-3, 3].
+    columns:
+      - name: item_id
+        tests: [not_null]
+  - name: 02_qc_kept
+    description: Измерения внутри недельного IQR (скрипт 2, возраст из колонки, бин / 7).
+    columns:
+      - name: item_id
+        tests: [not_null]
+      - name: mass
+        tests: [not_null]
+  - name: 02_qc_outliers
+    description: Отбраковка скрипта 2 — группы линия × площадка, как в исходной outliers-функции.
+    columns:
+      - name: item_id
+        tests: [not_null]

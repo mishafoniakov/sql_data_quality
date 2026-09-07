@@ -1,0 +1,31 @@
+name: sql_data_quality
+version: "1.0.0"
+config-version: 2
+profile: sql_data_quality
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+# Параметры исходной SQL-функции: period 90, IQR 2–5, квантили 0.01–0.15 / 0.85–0.99, left 2, right 2.5.
+vars:
+  period_days: 90
+  iqr_min: 2
+  iqr_max: 5
+  q_1_min: 0.01
+  q_1_max: 0.15
+  q_3_min: 0.85
+  q_3_max: 0.99
+  left_coef: 2
+  right_coef: 2.5
+
+models:
+  sql_data_quality:
+    +materialized: view
+
+seeds:
+  sql_data_quality:
+    +quote_columns: false
