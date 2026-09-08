@@ -22,6 +22,39 @@ seeds:
         event_date: date
         mass: float8
         age_days: integer
+  - name: lab_passports
+    description: Паспорт изделия с основным и запасными идентификаторами.
+    config:
+      column_types:
+        item_id: varchar
+        item_type: integer
+        start_date: date
+        id_main: varchar
+        id_2: varchar
+        id_3: varchar
+        id_alt_1: varchar
+        id_alt_2: varchar
+        id_alt_3: varchar
+        id_alt_4: varchar
+        id_extra_1: varchar
+        id_extra_2: varchar
+        id_extra_3: varchar
+        id_extra_4: varchar
+        id_extra_5: varchar
+        id_extra_6: varchar
+        id_extra_7: varchar
+        id_extra_8: varchar
+        id_extra_9: varchar
+  - name: lab_ids
+    description: Лабораторные ID и дополнительные номера образца.
+    config:
+      column_types:
+        lab_id: varchar
+        lab_id_add_1: varchar
+        lab_id_add_2: varchar
+        lab_id_add_3: varchar
+        item_type: integer
+        lab_date: date
 
 models:
   - name: 01_qc_kept

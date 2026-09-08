@@ -10,7 +10,6 @@ test-paths: ["tests"]
 target-path: "target"
 clean-targets: ["target", "dbt_packages"]
 
-# Параметры исходной SQL-функции: period 90, IQR 2–5, квантили 0.01–0.15 / 0.85–0.99, left 2, right 2.5.
 vars:
   period_days: 90
   iqr_min: 2

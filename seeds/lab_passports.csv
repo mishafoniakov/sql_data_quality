@@ -1,0 +1,8 @@
+item_id,item_type,start_date,id_main,id_2,id_3,id_alt_1,id_alt_2,id_alt_3,id_alt_4,id_extra_1,id_extra_2,id_extra_3,id_extra_4,id_extra_5,id_extra_6,id_extra_7,id_extra_8,id_extra_9
+P001,1,2020-01-01,LAB-A,,,,,,,,,,,,,,,
+P002,2,2020-02-02,OTHER,LAB-B,,,,,,,,,,,,,,
+P003,1,1999-01-01,LAB-C,,,,,,,,,,,,,,,
+P004,2,1999-01-01,,LAB-D,,,,,,,,,,,,,,
+P005,1,2020-05-05,XX/LAB-E,,,,,,,,,,,,,,,
+P006,1,2020-06-06,FRAG,,,,,,,,,,,,,,,
+P007,1,2011-11-11,NONE,,,,,,,,,,,,,,,

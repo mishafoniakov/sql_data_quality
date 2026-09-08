@@ -1,0 +1,8 @@
+lab_id,lab_id_add_1,lab_id_add_2,lab_id_add_3,item_type,lab_date
+LAB-A,,,,1,2020-01-01
+LAB-B,,,,2,2020-02-02
+LAB-C,,,,1,2021-01-01
+LAB-D,,,,1,2020-01-01
+LAB-E,,,,1,2020-05-05
+PREFIX-FRAG-SUF,,,,1,2020-06-06
+UNUSED,,,,2,2010-01-01
